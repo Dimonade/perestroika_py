@@ -79,8 +79,8 @@ class ConnectionGene:
     def __init__(
         self,
         innovation_index: int,
-        source: NodeGene,
-        target: NodeGene,
+        source: int,
+        target: int,
         weight: float = 1.0,
         enabled: bool = True,
     ):
@@ -170,8 +170,8 @@ class Neat:
             genome.add_node(out_gene)
         return genome
 
-    def create_connection(self, source: NodeGene, target: NodeGene, genome: Genome):
-        connection_hash = f"{source.index:{hash_size}}" + f"{target.index:{hash_size}}"
+    def create_connection(self, genome: Genome, source: int, target: int, weight: float = 1.0):
+        connection_hash = f"{source:{hash_size}}" + f"{target:{hash_size}}"
         # Assume new connection.
         innovation_index = len(self.connections)
 
@@ -180,9 +180,7 @@ class Neat:
         else:
             innovation_index = self.connections[connection_hash]
 
-        genome.add_connection(
-            ConnectionGene(innovation_index, source.index, target.index, 1)
-        )
+        genome.add_connection(ConnectionGene(innovation_index, source, target, weight))
         return
 
     def print_connections(self):
@@ -190,15 +188,17 @@ class Neat:
             print(key, value)
         return
 
-    def calculate_distance(self, connections_a: dict, connections_b: dict):
-        innovations_a = [a.innovation_index for a in connections_a]
-        innovations_b = [b.innovation_index for b in connections_b]
-
-        high_innovation = max(innovations_a, innovations_b)
-
+    def calculate_distance(self, genome_a: Genome, genome_b: Genome):
+        innovations_a = [
+            a.innovation_index for a in genome_a.genome["connections"].values()
+        ]
+        innovations_b = [
+            b.innovation_index for b in genome_b.genome["connections"].values()
+        ]
+        low_innovation = min(max(innovations_a), max(innovations_b))
         different = sorted(set(innovations_a) ^ set(innovations_b))
-        excess = len([a for a in different if a > high_innovation])
-        disjoint = different - excess
+        excess = len([d for d in different if d > low_innovation])
+        disjoint = len(different) - excess
 
         same_innovations = sorted(set(innovations_a) & set(innovations_b))
         similar = len(same_innovations)
@@ -206,13 +206,18 @@ class Neat:
         weight_difference = (
             sum(
                 [
-                    abs(connections_a[i].weight - connections_b[i].weight)
+                    abs(
+                        genome_a.genome["connections"][i].weight
+                        - genome_b.genome["connections"][i].weight
+                    )
                     for i in same_innovations
                 ]
             )
             / similar
         )
-        n = max(len(connections_a), len(connections_b))
+        n = max(
+            len(genome_a.genome["connections"]), len(genome_b.genome["connections"])
+        )
         if n < 20:
             n = 1
 
