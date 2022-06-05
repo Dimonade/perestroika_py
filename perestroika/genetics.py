@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import copy
 import matplotlib
 import os
@@ -80,7 +81,7 @@ class ConnectionGene:
         innovation_index: int,
         source: NodeGene,
         target: NodeGene,
-        weight: float,
+        weight: float = 1.0,
         enabled: bool = True,
     ):
         self.innovation_index = innovation_index
@@ -93,7 +94,7 @@ class ConnectionGene:
 
 class Genome:
     def __init__(self):
-        self.genome = {"nodes": [], "connections": []}
+        self.genome = {"nodes": {}, "connections": {}}
         return
 
     def get_nodes_amount(self):
@@ -103,14 +104,15 @@ class Genome:
         return len(self.genome["connections"])
 
     def add_node(self, node: NodeGene):
-        self.genome["nodes"].append(node)
+        self.genome["nodes"].update({node.index: node})
         return
 
     def add_connection(self, connection: ConnectionGene):
-        self.genome["connections"].append(connection)
+        self.genome["connections"].update({connection.innovation_index: connection})
         return
 
     def remove_connection(self, connection: ConnectionGene):
+        raise NotImplementedError
         self.genome["connections"].remove(connection)
         return
 
@@ -141,10 +143,17 @@ class Genome:
 
 
 class Neat:
-    def __init__(self, input_size: int, output_size: int, clients: int):
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        clients: int,
+        distance_coefficients: dict = {"c1": 1, "c2": 1, "c3": 1},
+    ):
         self.input_size = input_size
         self.output_size = output_size
         self.clients = clients
+        self.distance_coefficients = distance_coefficients
         self.connections = {}
         return
 
@@ -174,7 +183,6 @@ class Neat:
         genome.add_connection(
             ConnectionGene(innovation_index, source.index, target.index, 1)
         )
-        genome.sort_connections()
         return
 
     def print_connections(self):
@@ -182,24 +190,36 @@ class Neat:
             print(key, value)
         return
 
-    def calculate_distance(self, connections_a: list, connections_b: list):
-        disjoint = 0
-        excess = 0
-        weight_difference = 0
-        similar = 0
+    def calculate_distance(self, connections_a: dict, connections_b: dict):
+        innovations_a = [a.innovation_index for a in connections_a]
+        innovations_b = [b.innovation_index for b in connections_b]
 
-        low_innovation = min(
-            connections_a[0].innovation_index, connections_b[0].innovation_index
+        high_innovation = max(innovations_a, innovations_b)
+
+        different = sorted(set(innovations_a) ^ set(innovations_b))
+        excess = len([a for a in different if a > high_innovation])
+        disjoint = different - excess
+
+        same_innovations = sorted(set(innovations_a) & set(innovations_b))
+        similar = len(same_innovations)
+
+        weight_difference = (
+            sum(
+                [
+                    abs(connections_a[i].weight - connections_b[i].weight)
+                    for i in same_innovations
+                ]
+            )
+            / similar
         )
-        high_innovations = max(
-            connections_a[-1].innovation_index, connections_b[-1].innovation_index
+        n = max(len(connections_a), len(connections_b))
+        if n < 20:
+            n = 1
+
+        d = (
+            self.distance_coefficients["c1"] * excess / n
+            + self.distance_coefficients["c2"] * disjoint / n
+            + self.distance_coefficients["c3"] * weight_difference
         )
 
-        for (a, b) in zip(connections_a, connections_b):
-            diff = abs(a.innovation_index - b.innovation_index)
-
-            if diff:
-                disjoint += diff
-            pass
-
-        return 0
+        return d
