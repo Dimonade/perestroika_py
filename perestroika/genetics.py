@@ -1,8 +1,3 @@
-from collections import OrderedDict
-import copy
-import matplotlib
-import os
-
 # NEAT consts.
 max_nodes = 100
 hash_size = f"0{len(str(max_nodes))}"
