@@ -89,39 +89,40 @@ class ConnectionGene:
 
 class Genome:
     def __init__(self):
-        self.genome = {"nodes": {}, "connections": {}}
+        self.nodes = {}
+        self.connections = {}
         return
 
     def get_nodes_amount(self):
-        return len(self.genome["nodes"])
+        return len(self.nodes)
 
     def get_connections_amount(self):
-        return len(self.genome["connections"])
+        return len(self.connections)
 
     def add_node(self, node: NodeGene):
-        self.genome["nodes"].update({node.index: node})
+        self.nodes.update({node.index: node})
         return
 
     def add_connection(self, connection: ConnectionGene):
-        self.genome["connections"].update({connection.innovation_index: connection})
+        self.connections.update({connection.innovation_index: connection})
         return
 
     def remove_connection(self, connection: ConnectionGene):
         raise NotImplementedError
-        self.genome["connections"].remove(connection)
+        self.connections.remove(connection)
         return
 
     def sort_connections(self):
-        self.genome["connections"].sort(key=lambda k: k.innovation_index)
+        self.connections.sort(key=lambda k: k.innovation_index)
         return
 
     def print_nodes(self):
-        for node in self.genome["nodes"]:
+        for node in self.nodes:
             print(node.__dict__)
         return
 
     def print_connections(self):
-        for connection in self.genome["connections"]:
+        for connection in self.connections:
             print(connection.__dict__)
         return
 
@@ -185,16 +186,15 @@ class Neat:
 
     def calculate_distance(self, genome_a: Genome, genome_b: Genome):
         innovations_a = [
-            a.innovation_index for a in genome_a.genome["connections"].values()
+            a.innovation_index for a in genome_a.connections.values()
         ]
         innovations_b = [
-            b.innovation_index for b in genome_b.genome["connections"].values()
+            b.innovation_index for b in genome_b.connections.values()
         ]
         low_innovation = min(max(innovations_a), max(innovations_b))
         different = sorted(set(innovations_a) ^ set(innovations_b))
         excess = len([d for d in different if d > low_innovation])
         disjoint = len(different) - excess
-
         same_innovations = sorted(set(innovations_a) & set(innovations_b))
         similar = len(same_innovations)
 
@@ -202,16 +202,16 @@ class Neat:
             sum(
                 [
                     abs(
-                        genome_a.genome["connections"][i].weight
-                        - genome_b.genome["connections"][i].weight
+                        genome_a.connections[i].weight
+                        - genome_b.connections[i].weight
                     )
                     for i in same_innovations
                 ]
             )
             / similar
-        )
+            )
         n = max(
-            len(genome_a.genome["connections"]), len(genome_b.genome["connections"])
+            len(genome_a.connections), len(genome_b.connections)
         )
         if n < 20:
             n = 1
@@ -223,3 +223,8 @@ class Neat:
         )
 
         return d
+
+    def crossover(self, genome_a: Genome, genome_b: Genome):
+        # TODO: From similar connections, randomly choose weights;
+        # Excess is added to the child.
+        return
