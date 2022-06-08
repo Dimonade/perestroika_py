@@ -27,7 +27,7 @@ visible_light_sight_distance = 1
 visible_light_sight_angle = 90
 uv_light_sight_distance = 1
 uv_light_sight_angle = 90
-kamtans_in_sight = []
+tovarisches_in_sight = []
 immune_system = 0
 
 
@@ -224,7 +224,40 @@ class Neat:
 
         return d
 
-    def crossover(self, genome_a: Genome, genome_b: Genome):
-        # TODO: From similar connections, randomly choose weights;
-        # Excess is added to the child.
+    def crossover(self, genome_a: Genome, genome_b: Genome) -> Genome:
+        # TODO: Each connection with the same innovation number:
+        #   randomly choose between the two parents (can inherit different
+        # `weight` and `enabled`);
+        # If only one parent has it: add it to the child as it is.
+        # If the fitter parent has excess genes: add them to the child.
+        genome_c = self.create_new_genome()
+        return genome_c
+
+    def mutate_add_node(self, genome: Genome):
+        # Add a node on a connection so that:
+        # src -> 1 -> new_node -> old_weight -> target.
+        # (in practice: creates two new connections, and the old one is
+        # removed, or deactivated).
+        return
+
+    def mutate_remove_connection(self, genome: Genome):
+        return
+
+    def mutate_add_connection(self, genome: Genome):
+        return
+
+    def mutate_remove_node(self, genome: Genome):
+        return
+
+    def mutate_enable_disable_connection(self, genome: Genome):
+        # If connection is enabled -> disable and vice versa.
+        return
+
+    def mutate_weight_shift(self, genome: Genome):
+        return
+
+    def mutate_weight_random(self, genome: Genome):
+        return
+
+    def plot_genome(self, genome: Genome):
         return

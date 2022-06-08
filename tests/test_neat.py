@@ -97,6 +97,13 @@ class TestGenetics(unittest.TestCase):
 
         self.assertEqual(neat.calculate_distance(genome_a, genome_b), round(4.075, 3))
 
+    def test_crossover(self):
+        neat = Neat(3, 3, 10)
+        genome_a = neat.create_new_genome()
+        genome_b = neat.create_new_genome()
+        genome_c = neat.crossover(genome_a, genome_b)
+        self.assertEqual(genome_c, False)
+
 
 if __name__ == "__main__":
     unittest.main()
